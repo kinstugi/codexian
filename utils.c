@@ -42,7 +42,7 @@ char	*ft_itoa(int num)
 		nbr *= -1;
 		ret[i++] = '-';
 	}
-	while (nbr > 10)
+	while (nbr >= 10)
 	{
 		ret[i++] = '0' + (nbr % 10);
 		nbr /= 10;
