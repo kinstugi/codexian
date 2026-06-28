@@ -17,12 +17,20 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
+# define MAX_VAL 2147483647
 
 typedef struct s_input
 {
 	int		codes[7];
 	char	scheduler[5];
 }			t_input;
+
+typedef struct s_priority_queue
+{
+	size_t	capacity;
+	size_t	len;
+	int		*pq;
+}			t_pq;
 
 char		*ft_itoa(int num);
 #endif
