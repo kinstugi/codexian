@@ -32,6 +32,7 @@ typedef struct s_priority_queue
 	int		*pq;
 }			t_pq;
 
-char		*ft_itoa(int num);
 void		ft_swap(void *a, void *b);
+char		*ft_strcpy(char *dest, char *src, size_t len);
+int			ft_valid_num(char *num_str);
 #endif

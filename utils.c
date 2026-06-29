@@ -12,45 +12,32 @@
 
 #include "ft_codexion.h"
 
-void	ft_rev_str(char *str, int l, int r)
+int	ft_valid_num(char *num_str)
 {
-	char	tmp;
-
-	while (l < r)
-	{
-		tmp = str[l];
-		str[l] = str[r];
-		str[r] = tmp;
-		l++;
-		r--;
-	}
-}
-
-char	*ft_itoa(int num)
-{
-	char		*ret;
 	int			i;
-	long long	nbr;
+	long long	num;
+	int			d_cnt;
 
-	ret = malloc(12);
-	if (!ret)
-		return (0);
+	d_cnt = 0;
 	i = 0;
-	nbr = num;
-	if (num < 0)
+	num = 0;
+	while (num_str[i] && num_str[i] == ' ')
+		i++;
+	if (num_str[i] == '-')
+		return (-1);
+	i = i + (num_str[i] == '+');
+	while (num_str[i] && ('0' <= num_str[i] && num_str[i] <= '9'))
 	{
-		nbr *= -1;
-		ret[i++] = '-';
+		num = (num * 10) + num_str[i] - '0';
+		if (num > MAX_VAL || d_cnt > 11)
+			return (-1);
+		i++, d_cnt++;
 	}
-	while (nbr >= 10)
-	{
-		ret[i++] = '0' + (nbr % 10);
-		nbr /= 10;
-	}
-	ret[i++] = '0' + nbr;
-	ft_rev_str(ret, 0 + (num < 0), i - 1);
-	ret[i] = 0;
-	return (ret);
+	while (num_str[i] && num_str[i] == ' ')
+		i++;
+	if (num_str[i] != 0 || d_cnt == 0)
+		return (-1);
+	return ((int)num);
 }
 
 void	ft_swap(void *a, void *b)
@@ -60,4 +47,20 @@ void	ft_swap(void *a, void *b)
 	tmp = a;
 	a = b;
 	b = tmp;
+}
+
+char	*ft_strcpy(char *dest, char *src, size_t len)
+{
+	size_t	i;
+
+	if (len > 4)
+		len = 4;
+	i = 0;
+	while (i < len)
+	{
+		dest[i] = src[i];
+		i++;
+	}
+	dest[len] = 0;
+	return (dest);
 }

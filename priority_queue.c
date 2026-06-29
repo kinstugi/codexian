@@ -30,28 +30,17 @@ int	initialize_min_pq(t_pq *min_q, size_t size)
 	return (1);
 }
 
-int	pop_top(t_pq *min_q)
+int	pop_top(t_pq *q)
 {
 	int		ret;
 	size_t	i;
 
 	i = 0;
-	ret = min_q->pq[0];
-	ft_swap(&(min_q->pq[0]), &(min_q->pq[min_q->len - 1]));
-	min_q->len--;
-	while (2 * i + 1 < min_q->len)
+	ret = q->pq[0];
+	ft_swap(&(q->pq[0]), &(q->pq[q->len - 1]));
+	q->len--;
+	while (2 * i + 1 < q->len)
 	{
-		if (min_q->[2 * i + 1] < min_q[2 * i + 2] && min_q[i] > min_q->[2 * i
-			+ 1])
-		{
-			ft_swap(&(min_q->pq[i]), &(min_q->[2 * i + 1]));
-			i = 2 * i + 1;
-		}
-		else
-		{
-			ft_swap(&(min_q->pq[i]), &(min_q->[2 * i + 2]));
-			i = 2 * i + 2;
-		}
 	}
 	return (ret);
 }
