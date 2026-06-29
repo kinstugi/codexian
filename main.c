@@ -39,7 +39,23 @@ int	process_input(int ac, char **av, t_input *input)
 
 int	main(int ac, char **av)
 {
-	t_input	app_input;
+	t_pq	mq;
+	int		num;
 
+	// t_input	app_input;
+	// process_input(ac, av, &app_input);
+	min_pq_init(&mq, ac - 1);
+	for (int i = 1; i < ac; i++)
+	{
+		num = atoi(av[i]);
+		min_q_push(&mq, num);
+	}
+	while (mq.len)
+	{
+		num = min_q_pop_top(&mq);
+		printf("%d ", num);
+	}
+	printf("\n");
+	min_q_clear(&mq);
 	return (0);
 }

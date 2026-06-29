@@ -41,13 +41,13 @@ int	ft_valid_num(char *num_str)
 	return ((int)num);
 }
 
-void	ft_swap(void *a, void *b)
+void	ft_swap(int *a, int *b)
 {
-	void	*tmp;
+	int	tmp;
 
-	tmp = a;
-	a = b;
-	b = tmp;
+	tmp = *a;
+	*a = *b;
+	*b = tmp;
 }
 
 char	*ft_strcpy(char *dest, char *src, size_t len)
