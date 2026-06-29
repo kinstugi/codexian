@@ -6,7 +6,7 @@
 /*   By: bkusi-fr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/28 02:56:20 by bkusi-fr          #+#    #+#             */
-/*   Updated: 2026/06/29 02:09:16 by kwaku            ###   ########.fr       */
+/*   Updated: 2026/06/29 18:01:39 by kwaku            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ int	min_q_pop_top(t_pq *q)
 	i = 0;
 	ret = q->pq[0];
 	ft_swap(&(q->pq[0]), &(q->pq[q->len - 1]));
+	q->pq[q->len - 1] = MAX_VAL;
 	q->len--;
 	while (2 * i + 1 < q->len)
 	{
@@ -51,6 +52,8 @@ int	min_q_pop_top(t_pq *q)
 			ft_swap(&(q->pq[2 * i + 2]), &(q->pq[i]));
 			i = 2 * i + 2;
 		}
+		else
+			break ;
 	}
 	return (ret);
 }
