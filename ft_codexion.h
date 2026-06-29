@@ -33,4 +33,5 @@ typedef struct s_priority_queue
 }			t_pq;
 
 char		*ft_itoa(int num);
+void		ft_swap(void *a, void *b);
 #endif

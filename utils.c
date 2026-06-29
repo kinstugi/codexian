@@ -6,7 +6,7 @@
 /*   By: bkusi-fr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/28 01:50:31 by bkusi-fr          #+#    #+#             */
-/*   Updated: 2026/06/28 01:50:34 by bkusi-fr         ###   ########.fr       */
+/*   Updated: 2026/06/29 01:41:37 by kwaku            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,4 +51,13 @@ char	*ft_itoa(int num)
 	ft_rev_str(ret, 0 + (num < 0), i - 1);
 	ret[i] = 0;
 	return (ret);
+}
+
+void	ft_swap(void *a, void *b)
+{
+	void	*tmp;
+
+	tmp = a;
+	a = b;
+	b = tmp;
 }

@@ -6,7 +6,7 @@
 /*   By: bkusi-fr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/28 02:56:20 by bkusi-fr          #+#    #+#             */
-/*   Updated: 2026/06/28 02:56:23 by bkusi-fr         ###   ########.fr       */
+/*   Updated: 2026/06/29 02:09:16 by kwaku            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,18 +37,19 @@ int	pop_top(t_pq *min_q)
 
 	i = 0;
 	ret = min_q->pq[0];
-	while ((2 * i + 1) < min_q->capacity)
+	ft_swap(&(min_q->pq[0]), &(min_q->pq[min_q->len - 1]));
+	min_q->len--;
+	while (2 * i + 1 < min_q->len)
 	{
-		if (min_q->pq[2 * i + 1] < min_q->pq[2 * i + 2])
+		if (min_q->[2 * i + 1] < min_q[2 * i + 2] && min_q[i] > min_q->[2 * i
+			+ 1])
 		{
-			min_q->pq[i] = min_q->pq[2 * i + 1];
-			min_q->pq[2 * i + 1] = MAX_VAL;
+			ft_swap(&(min_q->pq[i]), &(min_q->[2 * i + 1]));
 			i = 2 * i + 1;
 		}
 		else
 		{
-			min_q->pq[i] = min_q->pq[2 * i + 2];
-			min_q->pq[2 * i + 2] = MAX_VAL;
+			ft_swap(&(min_q->pq[i]), &(min_q->[2 * i + 2]));
 			i = 2 * i + 2;
 		}
 	}
