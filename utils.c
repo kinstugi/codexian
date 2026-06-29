@@ -31,7 +31,8 @@ int	ft_valid_num(char *num_str)
 		num = (num * 10) + num_str[i] - '0';
 		if (num > MAX_VAL || d_cnt > 11)
 			return (-1);
-		i++, d_cnt++;
+		i++;
+		d_cnt++;
 	}
 	while (num_str[i] && num_str[i] == ' ')
 		i++;

@@ -25,10 +25,10 @@ int	process_input(int ac, char **av, t_input *input)
 	while (++i < 8)
 	{
 		input->codes[i - 1] = ft_valid_num(av[i]);
-		if (input->codes[i-1] < 0)
+		if (input->codes[i - 1] < 0)
 		{
 			flag = 0;
-			break;
+			break ;
 		}
 	}
 	ft_strcpy(input->scheduler, av[8], strlen(av[8]));
