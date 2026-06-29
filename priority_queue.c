@@ -6,7 +6,7 @@
 /*   By: bkusi-fr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/28 02:56:20 by bkusi-fr          #+#    #+#             */
-/*   Updated: 2026/06/29 18:01:39 by kwaku            ###   ########.fr       */
+/*   Updated: 2026/06/29 23:13:34 by kwaku            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,11 +22,6 @@ int	min_pq_init(t_pq *min_q, size_t size)
 		return (0);
 	min_q->capacity = size;
 	min_q->len = 0;
-	while (i <= size)
-	{
-		min_q->pq[i] = MAX_VAL;
-		i++;
-	}
 	return (1);
 }
 
