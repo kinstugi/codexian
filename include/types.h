@@ -52,7 +52,7 @@ typedef struct s_dongle
 {
 	int						id;
 	pthread_mutex_t			mutex;
-	int						available_at;
+	long					available_at;
 	int						scheduler;
 }							t_dongle;
 

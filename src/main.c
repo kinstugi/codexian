@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "simulation.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -34,7 +35,8 @@ static void	print_config_accepted(t_config *config)
 
 int	main(int argc, char **argv)
 {
-	t_config	*config;
+	t_config		*config;
+	t_simulation	*simulation;
 
 	config = parse_args(argc, argv);
 	if (!config)
@@ -43,6 +45,12 @@ int	main(int argc, char **argv)
 		return (1);
 	}
 	print_config_accepted(config);
-	free(config);
+	simulation = simulation_init(config);
+	if (!simulation)
+	{
+		fprintf(stderr, "codexion: failed to initialize simulation\n");
+		return (1);
+	}
+	simulation_destroy(simulation);
 	return (0);
 }
