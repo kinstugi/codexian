@@ -1,59 +1,74 @@
 #include "parser.h"
 
-#include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static int	parse_number(const char *str, int *out)
+static char	*ft_itoa(int n)
 {
-	char	*end;
-	long	value;
+	static char		buf[12];
+	char			*tmp;
+	unsigned int	value;
 
-	errno = 0;
-	value = strtol(str, &end, 10);
-	if (str == end || *end != '\0' || errno == ERANGE)
-		return (0);
-	if (value < 0 || value > INT_MAX)
-		return (0);
-	*out = (int)value;
-	return (1);
+	tmp = buf + sizeof(buf) - 1;
+	*tmp = '\0';
+	value = (n < 0) ? 0U - (unsigned int)n : (unsigned int)n;
+	do
+	{
+		*--tmp = '0' + (value % 10);
+		value /= 10;
+	} while (value != 0);
+	if (n < 0)
+		*--tmp = '-';
+	return (tmp);
 }
 
-static int	parse_scheduler(const char *str, sched_type *out)
+static int	is_valid_number(const char *str, int *out)
 {
-	if (strcmp(str, "fifo") == 0)
-		*out = FIFO;
-	else if (strcmp(str, "edf") == 0)
-		*out = EDF;
-	else
+	int	value;
+
+	value = atoi(str);
+	if (value < 0)
 		return (0);
+	if (strcmp(ft_itoa(value), str) != 0)
+		return (0);
+	*out = value;
 	return (1);
 }
 
 static int	validate_numbers(t_config *config, char **av)
 {
-	if (!parse_number(av[1], &config->number_of_coders)
+	if (!is_valid_number(av[1], &config->number_of_coders)
 		|| config->number_of_coders == 0)
+	{
+		fprintf(stderr, "codexion: invalid numeric argument\n");
 		return (0);
-	if (!parse_number(av[2], &config->time_to_burnout)
-		|| !parse_number(av[3], &config->time_to_compile)
-		|| !parse_number(av[4], &config->time_to_debug)
-		|| !parse_number(av[5], &config->time_to_refactor)
-		|| !parse_number(av[6], &config->number_of_compiles_required)
-		|| !parse_number(av[7], &config->dongle_cooldown))
+	}
+	if (!is_valid_number(av[2], &config->time_to_burnout)
+		|| !is_valid_number(av[3], &config->time_to_compile)
+		|| !is_valid_number(av[4], &config->time_to_debug)
+		|| !is_valid_number(av[5], &config->time_to_refactor)
+		|| !is_valid_number(av[6], &config->number_of_compiles_required)
+		|| !is_valid_number(av[7], &config->dongle_cooldown))
+	{
+		fprintf(stderr, "codexion: invalid numeric argument\n");
 		return (0);
+	}
 	return (1);
 }
 
-static t_config	*attach_scheduler(t_config *config, char *str)
+static int	set_scheduler(t_config *config, char *str)
 {
-	if (parse_scheduler(str, &config->scheduler))
-		return (config);
-	fprintf(stderr, "codexion: invalid scheduler (use 'fifo' or 'edf')\n");
-	free(config);
-	return (0);
+	if (strcmp(str, "fifo") == 0)
+		config->scheduler = FIFO;
+	else if (strcmp(str, "edf") == 0)
+		config->scheduler = EDF;
+	else
+	{
+		fprintf(stderr, "codexion: invalid scheduler (use fifo or edf)\n");
+		return (0);
+	}
+	return (1);
 }
 
 t_config	*parse_args(int ac, char **av)
@@ -68,11 +83,10 @@ t_config	*parse_args(int ac, char **av)
 	config = malloc(sizeof(t_config));
 	if (!config)
 		return (0);
-	if (!validate_numbers(config, av))
+	if (!validate_numbers(config, av) || !set_scheduler(config, av[8]))
 	{
-		fprintf(stderr, "codexion: invalid numeric argument\n");
 		free(config);
 		return (0);
 	}
-	return (attach_scheduler(config, av[8]));
+	return (config);
 }
