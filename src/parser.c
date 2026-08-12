@@ -13,11 +13,13 @@ static char	*ft_itoa(int n)
 	tmp = buf + sizeof(buf) - 1;
 	*tmp = '\0';
 	value = (n < 0) ? 0U - (unsigned int)n : (unsigned int)n;
-	do
+	while (value != 0)
 	{
 		*--tmp = '0' + (value % 10);
 		value /= 10;
-	} while (value != 0);
+	}
+	if (n == 0)
+		*--tmp = '0';
 	if (n < 0)
 		*--tmp = '-';
 	return (tmp);
