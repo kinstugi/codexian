@@ -1,5 +1,5 @@
 #ifndef HEAP_H
-#define HEAP_H
+# define HEAP_H
 
 /*
 ** Custom binary heap / priority queue for scheduling requests.

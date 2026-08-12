@@ -1,5 +1,5 @@
 #ifndef CODER_H
-#define CODER_H
+# define CODER_H
 
 /*
 ** Coder thread lifecycle and state machine.
