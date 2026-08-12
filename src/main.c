@@ -1,19 +1,40 @@
+#include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "parser.h"
 
 static void	print_usage(void)
 {
-	fprintf(stderr, "usage: ./codexion number_of_coders time_to_burnout "
-		"time_to_compile time_to_debug time_to_refactor "
-		"number_of_compiles_required dongle_cooldown scheduler\n");
+	fprintf(stderr,
+			"usage: ./codexion number_of_coders time_to_burnout "
+			"time_to_compile time_to_debug time_to_refactor "
+			"number_of_compiles_required dongle_cooldown scheduler\n");
 	fprintf(stderr, "       scheduler: 'fifo' or 'edf'\n");
+}
+
+static void	print_config_accepted(t_config *config)
+{
+	char	*scheduler;
+
+	if (config->scheduler == FIFO)
+		scheduler = "fifo";
+	else
+		scheduler = "edf";
+	fprintf(stderr, "codexion: config accepted: %d coders, %dms burnout, "
+			"%dms compile, %dms debug, %dms refactor, %d compiles, "
+			"%dms cooldown, scheduler=%s\n",
+			config->number_of_coders,
+			config->time_to_burnout,
+			config->time_to_compile,
+			config->time_to_debug,
+			config->time_to_refactor,
+			config->number_of_compiles_required,
+			config->dongle_cooldown,
+			scheduler);
 }
 
 int	main(int argc, char **argv)
 {
 	t_config	*config;
-	char		*scheduler;
 
 	config = parse_args(argc, argv);
 	if (!config)
@@ -21,21 +42,7 @@ int	main(int argc, char **argv)
 		print_usage();
 		return (1);
 	}
-	if (config->scheduler == FIFO)
-		scheduler = "fifo";
-	else
-		scheduler = "edf";
-	printf("codexion: config accepted: %d coders, %dms burnout, "
-		"%dms compile, %dms debug, %dms refactor, %d compiles, "
-		"%dms cooldown, scheduler=%s\n",
-		config->number_of_coders,
-		config->time_to_burnout,
-		config->time_to_compile,
-		config->time_to_debug,
-		config->time_to_refactor,
-		config->number_of_compiles_required,
-		config->dongle_cooldown,
-		scheduler);
+	print_config_accepted(config);
 	free(config);
 	return (0);
 }

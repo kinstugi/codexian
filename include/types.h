@@ -8,13 +8,13 @@ typedef struct s_simulation	t_simulation;
 typedef struct s_coder		t_coder;
 typedef struct s_dongle		t_dongle;
 
-typedef enum				e_sched_type
+typedef enum e_sched_type
 {
 	EDF,
 	FIFO
 }							sched_type;
 
-typedef enum				e_coder_state
+typedef enum e_coder_state
 {
 	WAITING,
 	COMPILING,
@@ -67,7 +67,7 @@ typedef struct s_simulation
 	t_config				*configuration;
 	t_coder					*coders;
 	t_dongle				*dongles;
-	int						start_time;
+	long					start_time;
 	int						stop_flag;
 	int						stop_reason;
 	pthread_t				monitor;
