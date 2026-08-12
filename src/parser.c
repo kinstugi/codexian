@@ -12,7 +12,9 @@ static char	*ft_itoa(int n)
 
 	tmp = buf + sizeof(buf) - 1;
 	*tmp = '\0';
-	value = (n < 0) ? 0U - (unsigned int)n : (unsigned int)n;
+	value = (unsigned int)n;
+	if (n < 0)
+		value = 0U - value;
 	while (value != 0)
 	{
 		*--tmp = '0' + (value % 10);

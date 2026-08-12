@@ -13,6 +13,7 @@ static void	print_usage(void)
 int	main(int argc, char **argv)
 {
 	t_config	*config;
+	char		*scheduler;
 
 	config = parse_args(argc, argv);
 	if (!config)
@@ -20,6 +21,10 @@ int	main(int argc, char **argv)
 		print_usage();
 		return (1);
 	}
+	if (config->scheduler == FIFO)
+		scheduler = "fifo";
+	else
+		scheduler = "edf";
 	printf("codexion: config accepted: %d coders, %dms burnout, "
 		"%dms compile, %dms debug, %dms refactor, %d compiles, "
 		"%dms cooldown, scheduler=%s\n",
@@ -30,7 +35,7 @@ int	main(int argc, char **argv)
 		config->time_to_refactor,
 		config->number_of_compiles_required,
 		config->dongle_cooldown,
-		config->scheduler == FIFO ? "fifo" : "edf");
+		scheduler);
 	free(config);
 	return (0);
 }
