@@ -7,6 +7,7 @@ typedef struct s_config		t_config;
 typedef struct s_simulation	t_simulation;
 typedef struct s_coder		t_coder;
 typedef struct s_dongle		t_dongle;
+typedef struct s_heap_item	t_heap_item;
 
 typedef enum e_sched_type
 {
@@ -74,5 +75,19 @@ typedef struct s_simulation
 	pthread_mutex_t			logging;
 	t_sim_sync				sync;
 }							t_simulation;
+
+typedef struct s_heap_item
+{
+	long					key;
+	long					tie;
+	void					*data;
+}							t_heap_item;
+
+typedef struct s_heap
+{
+	t_heap_item				*items;
+	int						capacity;
+	int						size;
+}							t_heap;
 
 #endif
