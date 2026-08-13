@@ -25,7 +25,7 @@ typedef enum e_sched_type
 {
 	EDF,
 	FIFO
-}							sched_type;
+}							t_sched_type;
 
 typedef enum e_coder_state
 {
@@ -35,7 +35,7 @@ typedef enum e_coder_state
 	REFACTORING,
 	DONE,
 	BURNED_OUT
-}							coder_state;
+}							t_coder_state;
 
 typedef struct s_config
 {
@@ -46,7 +46,7 @@ typedef struct s_config
 	int						time_to_refactor;
 	int						number_of_compiles_required;
 	int						dongle_cooldown;
-	sched_type				scheduler;
+	t_sched_type			scheduler;
 }							t_config;
 
 typedef struct s_coder
@@ -57,7 +57,7 @@ typedef struct s_coder
 	t_dongle				*right_dongle;
 	int						compile_count;
 	int						last_compile_start;
-	coder_state				state;
+	t_coder_state			state;
 	t_simulation			*simulation;
 }							t_coder;
 
