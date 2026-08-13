@@ -20,7 +20,8 @@ static void	print_config_accepted(t_config *config)
 		scheduler = "fifo";
 	else
 		scheduler = "edf";
-	fprintf(stderr, "codexion: config accepted: %d coders, %dms burnout, "
+	fprintf(stderr,
+			"codexion: config accepted: %d coders, %dms burnout, "
 			"%dms compile, %dms debug, %dms refactor, %d compiles, "
 			"%dms cooldown, scheduler=%s\n",
 			config->number_of_coders,

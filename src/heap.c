@@ -66,11 +66,11 @@ static void	heap_sift_down(t_heap *heap, int root)
 		left = root * 2 + 1;
 		right = root * 2 + 2;
 		child = root;
-		if (left < heap->size
-			&& item_before(heap->items[left], heap->items[child]))
+		if (left < heap->size && item_before(heap->items[left],
+				heap->items[child]))
 			child = left;
-		if (right < heap->size
-			&& item_before(heap->items[right], heap->items[child]))
+		if (right < heap->size && item_before(heap->items[right],
+				heap->items[child]))
 			child = right;
 		if (child == root)
 			break ;

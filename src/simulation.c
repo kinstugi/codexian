@@ -50,8 +50,7 @@ static int	assign_topology(t_simulation *simulation)
 	{
 		simulation->coders[i].id = i + 1;
 		simulation->coders[i].left_dongle = &simulation->dongles[i];
-		simulation->coders[i].right_dongle = \
-			&simulation->dongles[(i + 1) % n];
+		simulation->coders[i].right_dongle = &simulation->dongles[(i + 1) % n];
 		simulation->coders[i].compile_count = 0;
 		simulation->coders[i].state = WAITING;
 		simulation->coders[i].simulation = simulation;
