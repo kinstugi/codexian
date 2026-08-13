@@ -64,6 +64,7 @@ int	main(int argc, char **argv)
 		fprintf(stderr, "codexion: failed to initialize simulation\n");
 		return (1);
 	}
+	simulation_run(simulation);
 	simulation_destroy(simulation);
 	return (0);
 }

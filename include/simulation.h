@@ -17,5 +17,8 @@
 
 t_simulation	*simulation_init(t_config *config);
 void			simulation_destroy(t_simulation *simulation);
+int				simulation_run(t_simulation *simulation);
+int				simulation_stopped(t_simulation *simulation);
+void			simulation_stop(t_simulation *simulation);
 
 #endif

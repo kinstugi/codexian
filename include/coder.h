@@ -13,9 +13,8 @@
 #ifndef CODER_H
 # define CODER_H
 
-/*
-** Coder thread lifecycle and state machine.
-** Implemented from milestone M6 onwards.
-*/
+# include "types.h"
+
+void	*coder_routine(void *arg);
 
 #endif

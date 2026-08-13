@@ -10,7 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "coder.h"
 #include "dongle.h"
+#include "logger.h"
 #include "simulation.h"
 #include <pthread.h>
 #include <stdlib.h>
@@ -64,6 +66,7 @@ static int	assign_topology(t_simulation *simulation)
 		simulation->coders[i].left_dongle = &simulation->dongles[i];
 		simulation->coders[i].right_dongle = &simulation->dongles[(i + 1) % n];
 		simulation->coders[i].compile_count = 0;
+		simulation->coders[i].last_compile_start = 0;
 		simulation->coders[i].state = WAITING;
 		simulation->coders[i].simulation = simulation;
 		i++;
@@ -92,6 +95,9 @@ static t_simulation	*alloc_simulation(t_config *config)
 	simulation->configuration = config;
 	simulation->dongles = NULL;
 	simulation->coders = NULL;
+	simulation->start_time = 0;
+	simulation->stop_flag = 0;
+	simulation->stop_reason = 0;
 	return (simulation);
 }
 
@@ -135,6 +141,58 @@ t_simulation	*simulation_init(t_config *config)
 		return (NULL);
 	}
 	return (simulation);
+}
+
+static void	join_coders(t_simulation *simulation, int count)
+{
+	int	i;
+
+	i = 0;
+	while (i < count)
+	{
+		pthread_join(simulation->coders[i].thread, NULL);
+		i++;
+	}
+}
+
+int	simulation_stopped(t_simulation *simulation)
+{
+	int	stopped;
+
+	pthread_mutex_lock(&simulation->sync.mutex);
+	stopped = simulation->stop_flag;
+	pthread_mutex_unlock(&simulation->sync.mutex);
+	return (stopped);
+}
+
+void	simulation_stop(t_simulation *simulation)
+{
+	pthread_mutex_lock(&simulation->sync.mutex);
+	simulation->stop_flag = 1;
+	pthread_mutex_unlock(&simulation->sync.mutex);
+}
+
+int	simulation_run(t_simulation *simulation)
+{
+	int	i;
+	int	n;
+
+	n = simulation->configuration->number_of_coders;
+	simulation->start_time = get_current_time_ms();
+	i = 0;
+	while (i < n)
+	{
+		if (pthread_create(&simulation->coders[i].thread, NULL,
+				coder_routine, &simulation->coders[i]) != 0)
+		{
+			simulation_stop(simulation);
+			join_coders(simulation, i);
+			return (0);
+		}
+		i++;
+	}
+	join_coders(simulation, n);
+	return (1);
 }
 
 void	simulation_destroy(t_simulation *simulation)

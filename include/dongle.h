@@ -23,6 +23,7 @@
 int		dongle_init(t_dongle *dongle, int id);
 void	dongle_destroy(t_dongle *dongle);
 int		dongle_can_be_acquired(t_dongle *dongle);
+int		dongle_acquire(t_dongle *dongle, int coder_id);
 int		dongle_release(t_dongle *dongle);
 
 #endif

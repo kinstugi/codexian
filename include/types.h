@@ -56,7 +56,7 @@ typedef struct s_coder
 	t_dongle				*left_dongle;
 	t_dongle				*right_dongle;
 	int						compile_count;
-	int						last_compile_start;
+	long					last_compile_start;
 	t_coder_state			state;
 	t_simulation			*simulation;
 }							t_coder;
@@ -66,7 +66,7 @@ typedef struct s_dongle
 	int						id;
 	pthread_mutex_t			mutex;
 	long					available_at;
-	int						scheduler;
+	int						owner;
 }							t_dongle;
 
 typedef struct s_sim_sync

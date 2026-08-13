@@ -12,6 +12,7 @@
 
 #include "logger.h"
 #include <sys/time.h>
+#include <unistd.h>
 
 long	get_current_time_ms(void)
 {
@@ -25,4 +26,9 @@ long	get_current_time_ms(void)
 long	get_elapsed_time_ms(t_simulation *simulation)
 {
 	return (get_current_time_ms() - simulation->start_time);
+}
+
+void	sleep_ms(long ms)
+{
+	usleep(ms * 1000);
 }
