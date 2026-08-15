@@ -22,8 +22,8 @@
 
 int		dongle_init(t_dongle *dongle, int id);
 void	dongle_destroy(t_dongle *dongle);
-int		dongle_can_be_acquired(t_dongle *dongle);
-int		dongle_acquire(t_dongle *dongle, int coder_id);
-int		dongle_release(t_dongle *dongle);
+int		dongles_try_acquire_both(t_dongle *a, t_dongle *b, int coder_id);
+void	dongles_release_both(t_dongle *a, t_dongle *b, long cooldown);
+long	dongle_wake_time(t_dongle *dongle, long now);
 
 #endif

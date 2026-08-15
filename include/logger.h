@@ -19,10 +19,12 @@
 */
 
 # include "types.h"
+# include <time.h>
 
 long	get_current_time_ms(void);
 long	get_elapsed_time_ms(t_simulation *simulation);
 void	sleep_ms(long ms);
+void	ms_to_timespec(long ms, struct timespec *ts);
 void	logger(t_simulation *simulation, int coder_id, const char *message);
 
 #endif

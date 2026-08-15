@@ -169,6 +169,7 @@ void	simulation_stop(t_simulation *simulation)
 {
 	pthread_mutex_lock(&simulation->sync.mutex);
 	simulation->stop_flag = 1;
+	pthread_cond_broadcast(&simulation->sync.condition);
 	pthread_mutex_unlock(&simulation->sync.mutex);
 }
 

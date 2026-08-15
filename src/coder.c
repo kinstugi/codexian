@@ -14,38 +14,72 @@
 #include "dongle.h"
 #include "logger.h"
 #include "simulation.h"
+#include <pthread.h>
 
-static void	release_dongles(t_coder *coder)
+static void	log_dongles_taken(t_coder *coder)
 {
-	dongle_release(coder->left_dongle);
+	logger(coder->simulation, coder->id, "has taken a dongle");
 	if (coder->left_dongle != coder->right_dongle)
-		dongle_release(coder->right_dongle);
+		logger(coder->simulation, coder->id, "has taken a dongle");
 }
 
-static int	take_dongles(t_coder *coder)
+static long	wait_deadline_ms(t_coder *coder)
+{
+	long	now;
+	long	deadline;
+	long	right_wake;
+
+	now = get_current_time_ms();
+	deadline = dongle_wake_time(coder->left_dongle, now);
+	if (coder->right_dongle != coder->left_dongle)
+	{
+		right_wake = dongle_wake_time(coder->right_dongle, now);
+		if (right_wake < deadline)
+			deadline = right_wake;
+	}
+	return (deadline);
+}
+
+static void	wait_for_dongles(t_coder *coder)
+{
+	t_simulation	*simulation;
+	struct timespec	deadline;
+
+	simulation = coder->simulation;
+	ms_to_timespec(wait_deadline_ms(coder), &deadline);
+	pthread_mutex_lock(&simulation->sync.mutex);
+	if (!simulation->stop_flag)
+		pthread_cond_timedwait(&simulation->sync.condition,
+			&simulation->sync.mutex, &deadline);
+	pthread_mutex_unlock(&simulation->sync.mutex);
+}
+
+static int	coder_acquire_dongles(t_coder *coder)
+{
+	while (1)
+	{
+		if (simulation_stopped(coder->simulation))
+			return (0);
+		if (dongles_try_acquire_both(coder->left_dongle,
+				coder->right_dongle, coder->id))
+		{
+			log_dongles_taken(coder);
+			return (1);
+		}
+		wait_for_dongles(coder);
+	}
+}
+
+static void	coder_release_dongles(t_coder *coder)
 {
 	t_simulation	*simulation;
 
 	simulation = coder->simulation;
-	if (coder->left_dongle == coder->right_dongle)
-	{
-		if (!dongle_acquire(coder->left_dongle, coder->id))
-			return (0);
-	}
-	else
-	{
-		if (!dongle_acquire(coder->left_dongle, coder->id))
-			return (0);
-		if (!dongle_acquire(coder->right_dongle, coder->id))
-		{
-			dongle_release(coder->left_dongle);
-			return (0);
-		}
-	}
-	logger(simulation, coder->id, "has taken a dongle");
-	if (coder->left_dongle != coder->right_dongle)
-		logger(simulation, coder->id, "has taken a dongle");
-	return (1);
+	dongles_release_both(coder->left_dongle, coder->right_dongle,
+		simulation->configuration->dongle_cooldown);
+	pthread_mutex_lock(&simulation->sync.mutex);
+	pthread_cond_broadcast(&simulation->sync.condition);
+	pthread_mutex_unlock(&simulation->sync.mutex);
 }
 
 static void	compile_cycle(t_coder *coder)
@@ -60,7 +94,7 @@ static void	compile_cycle(t_coder *coder)
 	coder->compile_count += 1;
 	logger(simulation, coder->id, "is compiling");
 	sleep_ms(config->time_to_compile);
-	release_dongles(coder);
+	coder_release_dongles(coder);
 	coder->state = DEBUGGING;
 	logger(simulation, coder->id, "is debugging");
 	sleep_ms(config->time_to_debug);
@@ -82,8 +116,8 @@ void	*coder_routine(void *arg)
 		&& coder->compile_count < config->number_of_compiles_required)
 	{
 		coder->state = WAITING;
-		if (!take_dongles(coder))
-			continue ;
+		if (!coder_acquire_dongles(coder))
+			break ;
 		compile_cycle(coder);
 	}
 	coder->state = DONE;
