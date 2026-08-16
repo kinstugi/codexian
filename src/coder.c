@@ -24,6 +24,79 @@ static void	log_dongles_taken(t_coder *coder)
 		logger(coder->simulation, coder->id, "has taken a dongle");
 }
 
+static void	coder_set_state(t_coder *coder, t_coder_state state)
+{
+	t_simulation	*simulation;
+
+	simulation = coder->simulation;
+	pthread_mutex_lock(&simulation->sync.mutex);
+	if (coder->state != BURNED_OUT)
+		coder->state = state;
+	pthread_cond_broadcast(&simulation->sync.condition);
+	pthread_mutex_unlock(&simulation->sync.mutex);
+}
+
+static int	coder_should_run(t_coder *coder)
+{
+	t_simulation	*simulation;
+	int			running;
+
+	simulation = coder->simulation;
+	pthread_mutex_lock(&simulation->sync.mutex);
+	running = (!simulation->stop_flag && coder->compile_count
+		< simulation->configuration->number_of_compiles_required);
+	pthread_mutex_unlock(&simulation->sync.mutex);
+	return (running);
+}
+
+static int	coder_wait_ms(t_simulation *simulation, long ms)
+{
+	struct timespec	deadline;
+	long			end;
+	int			stopped;
+
+	end = get_current_time_ms() + ms;
+	ms_to_timespec(end, &deadline);
+	pthread_mutex_lock(&simulation->sync.mutex);
+	while (!simulation->stop_flag && get_current_time_ms() < end)
+		pthread_cond_timedwait(&simulation->sync.condition,
+			&simulation->sync.mutex, &deadline);
+	stopped = simulation->stop_flag;
+	pthread_mutex_unlock(&simulation->sync.mutex);
+	return (!stopped);
+}
+
+static int	coder_begin_compile(t_coder *coder)
+{
+	t_simulation	*simulation;
+
+	simulation = coder->simulation;
+	pthread_mutex_lock(&simulation->sync.mutex);
+	if (simulation->stop_flag)
+	{
+		pthread_mutex_unlock(&simulation->sync.mutex);
+		return (0);
+	}
+	coder->state = COMPILING;
+	coder->last_compile_start = get_current_time_ms();
+	pthread_cond_broadcast(&simulation->sync.condition);
+	pthread_mutex_unlock(&simulation->sync.mutex);
+	logger(simulation, coder->id, "is compiling");
+	return (1);
+}
+
+static void	coder_complete_compile(t_coder *coder)
+{
+	t_simulation	*simulation;
+
+	simulation = coder->simulation;
+	pthread_mutex_lock(&simulation->sync.mutex);
+	if (coder->state != BURNED_OUT)
+		coder->compile_count += 1;
+	pthread_cond_broadcast(&simulation->sync.condition);
+	pthread_mutex_unlock(&simulation->sync.mutex);
+}
+
 static long	wait_deadline_ms(t_coder *coder)
 {
 	long	now;
@@ -53,23 +126,38 @@ static void	wait_for_grant(t_coder *coder)
 			&simulation->sync.mutex, &deadline);
 }
 
+static int	wait_until_granted(t_coder *coder)
+{
+	t_simulation	*simulation;
+
+	simulation = coder->simulation;
+	while (!coder->granted)
+	{
+		if (simulation->stop_flag)
+			return (0);
+		wait_for_grant(coder);
+		scheduler_grant(simulation);
+	}
+	return (1);
+}
+
 static int	coder_acquire_dongles(t_coder *coder)
 {
 	t_simulation	*simulation;
 
 	simulation = coder->simulation;
 	pthread_mutex_lock(&simulation->sync.mutex);
+	if (simulation->stop_flag)
+	{
+		pthread_mutex_unlock(&simulation->sync.mutex);
+		return (0);
+	}
 	scheduler_submit(simulation, coder);
 	scheduler_grant(simulation);
-	while (!coder->granted)
+	if (!wait_until_granted(coder))
 	{
-		if (simulation->stop_flag)
-		{
-			pthread_mutex_unlock(&simulation->sync.mutex);
-			return (0);
-		}
-		wait_for_grant(coder);
-		scheduler_grant(simulation);
+		pthread_mutex_unlock(&simulation->sync.mutex);
+		return (0);
 	}
 	coder->granted = 0;
 	pthread_mutex_unlock(&simulation->sync.mutex);
@@ -90,44 +178,73 @@ static void	coder_release_dongles(t_coder *coder)
 	pthread_mutex_unlock(&simulation->sync.mutex);
 }
 
-static void	compile_cycle(t_coder *coder)
+static int	debug_and_refactor(t_coder *coder)
 {
 	t_simulation	*simulation;
 	t_config		*config;
 
 	simulation = coder->simulation;
 	config = simulation->configuration;
-	coder->state = COMPILING;
-	coder->last_compile_start = get_current_time_ms();
-	coder->compile_count += 1;
-	logger(simulation, coder->id, "is compiling");
-	sleep_ms(config->time_to_compile);
-	coder_release_dongles(coder);
-	coder->state = DEBUGGING;
+	coder_set_state(coder, DEBUGGING);
 	logger(simulation, coder->id, "is debugging");
-	sleep_ms(config->time_to_debug);
-	coder->state = REFACTORING;
+	if (!coder_wait_ms(simulation, config->time_to_debug))
+		return (0);
+	coder_set_state(coder, REFACTORING);
 	logger(simulation, coder->id, "is refactoring");
-	sleep_ms(config->time_to_refactor);
+	if (!coder_wait_ms(simulation, config->time_to_refactor))
+		return (0);
+	return (1);
+}
+
+static int	compile_cycle(t_coder *coder)
+{
+	t_simulation	*simulation;
+	t_config		*config;
+
+	simulation = coder->simulation;
+	config = simulation->configuration;
+	if (!coder_begin_compile(coder))
+	{
+		coder_release_dongles(coder);
+		return (0);
+	}
+	if (!coder_wait_ms(simulation, config->time_to_compile))
+	{
+		coder_release_dongles(coder);
+		return (0);
+	}
+	coder_complete_compile(coder);
+	coder_release_dongles(coder);
+	if (!coder_should_run(coder))
+		return (0);
+	return (debug_and_refactor(coder));
+}
+
+static void	coder_finish(t_coder *coder)
+{
+	t_simulation	*simulation;
+
+	simulation = coder->simulation;
+	pthread_mutex_lock(&simulation->sync.mutex);
+	if (coder->state != BURNED_OUT)
+		coder->state = DONE;
+	pthread_cond_broadcast(&simulation->sync.condition);
+	pthread_mutex_unlock(&simulation->sync.mutex);
 }
 
 void	*coder_routine(void *arg)
 {
-	t_coder			*coder;
-	t_simulation	*simulation;
-	t_config		*config;
+	t_coder	*coder;
 
 	coder = (t_coder *)arg;
-	simulation = coder->simulation;
-	config = simulation->configuration;
-	while (!simulation_stopped(simulation)
-		&& coder->compile_count < config->number_of_compiles_required)
+	while (coder_should_run(coder))
 	{
-		coder->state = WAITING;
+		coder_set_state(coder, WAITING);
 		if (!coder_acquire_dongles(coder))
 			break ;
-		compile_cycle(coder);
+		if (!compile_cycle(coder))
+			break ;
 	}
-	coder->state = DONE;
+	coder_finish(coder);
 	return (NULL);
 }

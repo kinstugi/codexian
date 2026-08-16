@@ -13,6 +13,7 @@
 #include "coder.h"
 #include "dongle.h"
 #include "logger.h"
+#include "monitor.h"
 #include "scheduler.h"
 #include "simulation.h"
 #include <pthread.h>
@@ -171,6 +172,39 @@ static void	join_coders(t_simulation *simulation, int count)
 	}
 }
 
+static int	start_monitor(t_simulation *simulation)
+{
+	if (pthread_create(&simulation->monitor, NULL,
+			monitor_routine, simulation) != 0)
+	{
+		simulation_stop(simulation);
+		return (0);
+	}
+	return (1);
+}
+
+static int	start_coders(t_simulation *simulation)
+{
+	int	i;
+	int	n;
+
+	n = simulation->configuration->number_of_coders;
+	i = 0;
+	while (i < n)
+	{
+		simulation->coders[i].last_compile_start = simulation->start_time;
+		if (pthread_create(&simulation->coders[i].thread, NULL,
+				coder_routine, &simulation->coders[i]) != 0)
+		{
+			simulation_stop(simulation);
+			join_coders(simulation, i);
+			return (0);
+		}
+		i++;
+	}
+	return (1);
+}
+
 int	simulation_stopped(t_simulation *simulation)
 {
 	int	stopped;
@@ -191,24 +225,18 @@ void	simulation_stop(t_simulation *simulation)
 
 int	simulation_run(t_simulation *simulation)
 {
-	int	i;
 	int	n;
 
 	n = simulation->configuration->number_of_coders;
 	simulation->start_time = get_current_time_ms();
-	i = 0;
-	while (i < n)
+	if (!start_coders(simulation))
+		return (0);
+	if (!start_monitor(simulation))
 	{
-		simulation->coders[i].last_compile_start = simulation->start_time;
-		if (pthread_create(&simulation->coders[i].thread, NULL,
-				coder_routine, &simulation->coders[i]) != 0)
-		{
-			simulation_stop(simulation);
-			join_coders(simulation, i);
-			return (0);
-		}
-		i++;
+		join_coders(simulation, n);
+		return (0);
 	}
+	pthread_join(simulation->monitor, NULL);
 	join_coders(simulation, n);
 	return (1);
 }
