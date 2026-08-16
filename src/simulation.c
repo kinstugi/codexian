@@ -13,6 +13,7 @@
 #include "coder.h"
 #include "dongle.h"
 #include "logger.h"
+#include "scheduler.h"
 #include "simulation.h"
 #include <pthread.h>
 #include <stdlib.h>
@@ -98,6 +99,11 @@ static t_simulation	*alloc_simulation(t_config *config)
 	simulation->start_time = 0;
 	simulation->stop_flag = 0;
 	simulation->stop_reason = 0;
+	simulation->scheduler.pending = NULL;
+	simulation->scheduler.heap.items = NULL;
+	simulation->scheduler.heap.size = 0;
+	simulation->scheduler.heap.capacity = 0;
+	simulation->scheduler.next_seq = 0;
 	return (simulation);
 }
 
@@ -119,6 +125,15 @@ static int	init_sync(t_simulation *simulation)
 	return (1);
 }
 
+static int	init_scheduler(t_simulation *simulation)
+{
+	int	n;
+
+	n = simulation->configuration->number_of_coders;
+	return (scheduler_init(&simulation->scheduler, n,
+			simulation->configuration->scheduler));
+}
+
 t_simulation	*simulation_init(t_config *config)
 {
 	t_simulation	*simulation;
@@ -135,7 +150,8 @@ t_simulation	*simulation_init(t_config *config)
 		free(config);
 		return (NULL);
 	}
-	if (init_dongles(simulation) == 0 || init_coders(simulation) == 0)
+	if (init_dongles(simulation) == 0 || init_coders(simulation) == 0
+		|| init_scheduler(simulation) == 0)
 	{
 		simulation_destroy(simulation);
 		return (NULL);
@@ -183,6 +199,7 @@ int	simulation_run(t_simulation *simulation)
 	i = 0;
 	while (i < n)
 	{
+		simulation->coders[i].last_compile_start = simulation->start_time;
 		if (pthread_create(&simulation->coders[i].thread, NULL,
 				coder_routine, &simulation->coders[i]) != 0)
 		{
@@ -214,6 +231,7 @@ void	simulation_destroy(t_simulation *simulation)
 	pthread_mutex_destroy(&simulation->logging);
 	pthread_mutex_destroy(&simulation->sync.mutex);
 	pthread_cond_destroy(&simulation->sync.condition);
+	scheduler_destroy(&simulation->scheduler);
 	free(simulation->coders);
 	free(simulation->dongles);
 	free(simulation->configuration);

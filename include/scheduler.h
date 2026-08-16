@@ -13,9 +13,11 @@
 #ifndef SCHEDULER_H
 # define SCHEDULER_H
 
-/*
-** FIFO and EDF dongle arbitration.
-** Implemented from milestone M8 onwards.
-*/
+# include "types.h"
+
+int		scheduler_init(t_scheduler *sched, int n, t_sched_type type);
+void	scheduler_destroy(t_scheduler *sched);
+void	scheduler_submit(t_simulation *sim, t_coder *coder);
+void	scheduler_grant(t_simulation *sim);
 
 #endif

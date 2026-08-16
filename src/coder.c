@@ -13,6 +13,7 @@
 #include "coder.h"
 #include "dongle.h"
 #include "logger.h"
+#include "scheduler.h"
 #include "simulation.h"
 #include <pthread.h>
 
@@ -40,34 +41,40 @@ static long	wait_deadline_ms(t_coder *coder)
 	return (deadline);
 }
 
-static void	wait_for_dongles(t_coder *coder)
+static void	wait_for_grant(t_coder *coder)
 {
 	t_simulation	*simulation;
 	struct timespec	deadline;
 
 	simulation = coder->simulation;
 	ms_to_timespec(wait_deadline_ms(coder), &deadline);
-	pthread_mutex_lock(&simulation->sync.mutex);
 	if (!simulation->stop_flag)
 		pthread_cond_timedwait(&simulation->sync.condition,
 			&simulation->sync.mutex, &deadline);
-	pthread_mutex_unlock(&simulation->sync.mutex);
 }
 
 static int	coder_acquire_dongles(t_coder *coder)
 {
-	while (1)
+	t_simulation	*simulation;
+
+	simulation = coder->simulation;
+	pthread_mutex_lock(&simulation->sync.mutex);
+	scheduler_submit(simulation, coder);
+	scheduler_grant(simulation);
+	while (!coder->granted)
 	{
-		if (simulation_stopped(coder->simulation))
-			return (0);
-		if (dongles_try_acquire_both(coder->left_dongle,
-				coder->right_dongle, coder->id))
+		if (simulation->stop_flag)
 		{
-			log_dongles_taken(coder);
-			return (1);
+			pthread_mutex_unlock(&simulation->sync.mutex);
+			return (0);
 		}
-		wait_for_dongles(coder);
+		wait_for_grant(coder);
+		scheduler_grant(simulation);
 	}
+	coder->granted = 0;
+	pthread_mutex_unlock(&simulation->sync.mutex);
+	log_dongles_taken(coder);
+	return (1);
 }
 
 static void	coder_release_dongles(t_coder *coder)
@@ -75,9 +82,10 @@ static void	coder_release_dongles(t_coder *coder)
 	t_simulation	*simulation;
 
 	simulation = coder->simulation;
+	pthread_mutex_lock(&simulation->sync.mutex);
 	dongles_release_both(coder->left_dongle, coder->right_dongle,
 		simulation->configuration->dongle_cooldown);
-	pthread_mutex_lock(&simulation->sync.mutex);
+	scheduler_grant(simulation);
 	pthread_cond_broadcast(&simulation->sync.condition);
 	pthread_mutex_unlock(&simulation->sync.mutex);
 }

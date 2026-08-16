@@ -31,49 +31,23 @@ void	dongle_destroy(t_dongle *dongle)
 	pthread_mutex_destroy(&dongle->mutex);
 }
 
-static int	dongle_ready(t_dongle *dongle, long now)
+int	dongle_is_free(t_dongle *dongle)
 {
-	return (dongle->owner == -1 && now >= dongle->available_at);
-}
-
-static int	try_acquire_pair(t_dongle *first, t_dongle *second,
-		int coder_id, long now)
-{
-	int	acquired;
-
-	pthread_mutex_lock(&first->mutex);
-	pthread_mutex_lock(&second->mutex);
-	acquired = dongle_ready(first, now) && dongle_ready(second, now);
-	if (acquired)
-	{
-		first->owner = coder_id;
-		second->owner = coder_id;
-	}
-	pthread_mutex_unlock(&second->mutex);
-	pthread_mutex_unlock(&first->mutex);
-	return (acquired);
-}
-
-int	dongles_try_acquire_both(t_dongle *a, t_dongle *b, int coder_id)
-{
+	int		available;
 	long	now;
 
+	pthread_mutex_lock(&dongle->mutex);
 	now = get_current_time_ms();
-	if (a == b)
-	{
-		pthread_mutex_lock(&a->mutex);
-		if (dongle_ready(a, now))
-		{
-			a->owner = coder_id;
-			pthread_mutex_unlock(&a->mutex);
-			return (1);
-		}
-		pthread_mutex_unlock(&a->mutex);
-		return (0);
-	}
-	if (a->id < b->id)
-		return (try_acquire_pair(a, b, coder_id, now));
-	return (try_acquire_pair(b, a, coder_id, now));
+	available = (dongle->owner == -1 && now >= dongle->available_at);
+	pthread_mutex_unlock(&dongle->mutex);
+	return (available);
+}
+
+void	dongle_claim(t_dongle *dongle, int coder_id)
+{
+	pthread_mutex_lock(&dongle->mutex);
+	dongle->owner = coder_id;
+	pthread_mutex_unlock(&dongle->mutex);
 }
 
 static void	dongle_release_one(t_dongle *dongle, long now, long cooldown)

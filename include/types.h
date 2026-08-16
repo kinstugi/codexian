@@ -20,6 +20,8 @@ typedef struct s_simulation	t_simulation;
 typedef struct s_coder		t_coder;
 typedef struct s_dongle		t_dongle;
 typedef struct s_heap_item	t_heap_item;
+typedef struct s_request	t_request;
+typedef struct s_scheduler	t_scheduler;
 
 typedef enum e_sched_type
 {
@@ -49,6 +51,14 @@ typedef struct s_config
 	t_sched_type			scheduler;
 }							t_config;
 
+typedef struct s_request
+{
+	t_coder					*coder;
+	long					seq;
+	long					timestamp;
+	long					deadline;
+}							t_request;
+
 typedef struct s_coder
 {
 	int						id;
@@ -59,6 +69,8 @@ typedef struct s_coder
 	long					last_compile_start;
 	t_coder_state			state;
 	t_simulation			*simulation;
+	t_request				request;
+	int						granted;
 }							t_coder;
 
 typedef struct s_dongle
@@ -68,6 +80,28 @@ typedef struct s_dongle
 	long					available_at;
 	int						owner;
 }							t_dongle;
+
+typedef struct s_heap_item
+{
+	long					key;
+	long					tie;
+	void					*data;
+}							t_heap_item;
+
+typedef struct s_heap
+{
+	t_heap_item				*items;
+	int						capacity;
+	int						size;
+}							t_heap;
+
+typedef struct s_scheduler
+{
+	t_heap					heap;
+	t_coder					**pending;
+	long					next_seq;
+	t_sched_type			type;
+}							t_scheduler;
 
 typedef struct s_sim_sync
 {
@@ -86,20 +120,7 @@ typedef struct s_simulation
 	pthread_t				monitor;
 	pthread_mutex_t			logging;
 	t_sim_sync				sync;
+	t_scheduler				scheduler;
 }							t_simulation;
-
-typedef struct s_heap_item
-{
-	long					key;
-	long					tie;
-	void					*data;
-}							t_heap_item;
-
-typedef struct s_heap
-{
-	t_heap_item				*items;
-	int						capacity;
-	int						size;
-}							t_heap;
 
 #endif
