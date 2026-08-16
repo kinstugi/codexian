@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   dongle.c                                           :+:      :+:    :+:   */
+/*   dongle_release.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: bkusi-fr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -14,36 +14,43 @@
 #include "logger.h"
 #include <pthread.h>
 
-int	dongle_init(t_dongle *dongle, int id)
+#define DONGLE_WAIT_CAP_MS 1000
+
+static void	dongle_release_one(t_dongle *dongle, long now, long cooldown)
 {
-	dongle->id = id;
-	dongle->available_at = 0;
+	pthread_mutex_lock(&dongle->mutex);
 	dongle->owner = -1;
-	if (pthread_mutex_init(&dongle->mutex, NULL) != 0)
-		return (0);
-	return (1);
+	dongle->available_at = now + cooldown;
+	pthread_mutex_unlock(&dongle->mutex);
 }
 
-void	dongle_destroy(t_dongle *dongle)
+void	dongles_release_both(t_dongle *a, t_dongle *b, long cooldown)
 {
-	pthread_mutex_destroy(&dongle->mutex);
-}
-
-int	dongle_is_free(t_dongle *dongle)
-{
-	int		available;
 	long	now;
 
-	pthread_mutex_lock(&dongle->mutex);
 	now = get_current_time_ms();
-	available = (dongle->owner == -1 && now >= dongle->available_at);
-	pthread_mutex_unlock(&dongle->mutex);
-	return (available);
+	if (a->id < b->id || a == b)
+	{
+		dongle_release_one(a, now, cooldown);
+		if (a != b)
+			dongle_release_one(b, now, cooldown);
+	}
+	else
+	{
+		dongle_release_one(b, now, cooldown);
+		dongle_release_one(a, now, cooldown);
+	}
 }
 
-void	dongle_claim(t_dongle *dongle, int coder_id)
+long	dongle_wake_time(t_dongle *dongle, long now)
 {
+	long	wake;
+
 	pthread_mutex_lock(&dongle->mutex);
-	dongle->owner = coder_id;
+	if (dongle->owner == -1 && dongle->available_at > now)
+		wake = dongle->available_at;
+	else
+		wake = now + DONGLE_WAIT_CAP_MS;
 	pthread_mutex_unlock(&dongle->mutex);
+	return (wake);
 }

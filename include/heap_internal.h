@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   heap.c                                             :+:      :+:    :+:   */
+/*   heap_internal.h                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: bkusi-fr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,43 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "heap.h"
-#include <stdlib.h>
+#ifndef HEAP_INTERNAL_H
+# define HEAP_INTERNAL_H
 
-int	heap_init(t_heap *heap, int capacity)
-{
-	heap->items = NULL;
-	heap->capacity = capacity;
-	heap->size = 0;
-	if (capacity <= 0)
-		return (0);
-	heap->items = malloc(sizeof(t_heap_item) * capacity);
-	if (!heap->items)
-		return (0);
-	return (1);
-}
+# include "types.h"
 
-void	*heap_peek(t_heap *heap)
-{
-	if (heap->size == 0)
-		return (NULL);
-	return (heap->items[0].data);
-}
+void	heap_swap(t_heap_item *a, t_heap_item *b);
+int		heap_item_before(t_heap_item a, t_heap_item b);
 
-int	heap_empty(t_heap *heap)
-{
-	return (heap->size == 0);
-}
-
-int	heap_size(t_heap *heap)
-{
-	return (heap->size);
-}
-
-void	heap_destroy(t_heap *heap)
-{
-	free(heap->items);
-	heap->items = NULL;
-	heap->capacity = 0;
-	heap->size = 0;
-}
+#endif

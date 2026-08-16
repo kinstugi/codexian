@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   heap.c                                             :+:      :+:    :+:   */
+/*   heap_utils.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: bkusi-fr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,43 +10,22 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "heap.h"
-#include <stdlib.h>
+#include "heap_internal.h"
 
-int	heap_init(t_heap *heap, int capacity)
+void	heap_swap(t_heap_item *a, t_heap_item *b)
 {
-	heap->items = NULL;
-	heap->capacity = capacity;
-	heap->size = 0;
-	if (capacity <= 0)
-		return (0);
-	heap->items = malloc(sizeof(t_heap_item) * capacity);
-	if (!heap->items)
-		return (0);
-	return (1);
+	t_heap_item	tmp;
+
+	tmp = *a;
+	*a = *b;
+	*b = tmp;
 }
 
-void	*heap_peek(t_heap *heap)
+int	heap_item_before(t_heap_item a, t_heap_item b)
 {
-	if (heap->size == 0)
-		return (NULL);
-	return (heap->items[0].data);
-}
-
-int	heap_empty(t_heap *heap)
-{
-	return (heap->size == 0);
-}
-
-int	heap_size(t_heap *heap)
-{
-	return (heap->size);
-}
-
-void	heap_destroy(t_heap *heap)
-{
-	free(heap->items);
-	heap->items = NULL;
-	heap->capacity = 0;
-	heap->size = 0;
+	if (a.key < b.key)
+		return (1);
+	if (a.key == b.key)
+		return (a.tie < b.tie);
+	return (0);
 }
