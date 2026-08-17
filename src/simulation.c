@@ -10,11 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "dongle.h"
-#include "scheduler.h"
 #include "simulation.h"
 #include <pthread.h>
-#include <stdlib.h>
 
 int	simulation_stopped(t_simulation *simulation)
 {
@@ -28,33 +25,11 @@ int	simulation_stopped(t_simulation *simulation)
 
 void	simulation_stop(t_simulation *simulation)
 {
+	if (!simulation->sync_mutex_ready)
+		return ;
 	pthread_mutex_lock(&simulation->sync.mutex);
 	simulation->stop_flag = 1;
-	pthread_cond_broadcast(&simulation->sync.condition);
+	if (simulation->sync_cond_ready)
+		pthread_cond_broadcast(&simulation->sync.condition);
 	pthread_mutex_unlock(&simulation->sync.mutex);
-}
-
-void	simulation_destroy(t_simulation *simulation)
-{
-	int	n;
-	int	i;
-
-	n = simulation->configuration->number_of_coders;
-	i = 0;
-	if (simulation->dongles)
-	{
-		while (i < n)
-		{
-			dongle_destroy(&simulation->dongles[i]);
-			i++;
-		}
-	}
-	pthread_mutex_destroy(&simulation->logging);
-	pthread_mutex_destroy(&simulation->sync.mutex);
-	pthread_cond_destroy(&simulation->sync.condition);
-	scheduler_destroy(&simulation->scheduler);
-	free(simulation->coders);
-	free(simulation->dongles);
-	free(simulation->configuration);
-	free(simulation);
 }

@@ -43,8 +43,10 @@ int	init_dongles(t_simulation *simulation)
 			destroy_dongles(simulation, i);
 			free(simulation->dongles);
 			simulation->dongles = NULL;
+			simulation->dongles_ready = 0;
 			return (0);
 		}
+		simulation->dongles_ready = i + 1;
 		i++;
 	}
 	return (1);

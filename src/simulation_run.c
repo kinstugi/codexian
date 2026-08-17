@@ -27,6 +27,10 @@ void	join_coders(t_simulation *simulation, int count)
 		pthread_join(simulation->coders[i].thread, NULL);
 		i++;
 	}
+	if (simulation->coders_started >= count)
+		simulation->coders_started -= count;
+	else
+		simulation->coders_started = 0;
 }
 
 static int	start_monitor(t_simulation *simulation)
@@ -37,6 +41,7 @@ static int	start_monitor(t_simulation *simulation)
 		simulation_stop(simulation);
 		return (0);
 	}
+	simulation->monitor_started = 1;
 	return (1);
 }
 
@@ -57,6 +62,7 @@ static int	start_coders(t_simulation *simulation)
 			join_coders(simulation, i);
 			return (0);
 		}
+		simulation->coders_started += 1;
 		i++;
 	}
 	return (1);
@@ -76,6 +82,7 @@ int	simulation_run(t_simulation *simulation)
 		return (0);
 	}
 	pthread_join(simulation->monitor, NULL);
+	simulation->monitor_started = 0;
 	join_coders(simulation, n);
 	return (1);
 }

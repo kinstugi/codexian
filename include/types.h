@@ -117,6 +117,13 @@ typedef struct s_simulation
 	long					start_time;
 	int						stop_flag;
 	int						stop_reason;
+	int						logging_ready;
+	int						sync_mutex_ready;
+	int						sync_cond_ready;
+	int						dongles_ready;
+	int						scheduler_ready;
+	int						coders_started;
+	int						monitor_started;
 	pthread_t				monitor;
 	pthread_mutex_t			logging;
 	t_sim_sync				sync;

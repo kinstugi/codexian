@@ -16,6 +16,28 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+static void	clear_simulation(t_simulation *simulation, t_config *config)
+{
+	simulation->configuration = config;
+	simulation->dongles = NULL;
+	simulation->coders = NULL;
+	simulation->start_time = 0;
+	simulation->stop_flag = 0;
+	simulation->stop_reason = 0;
+	simulation->logging_ready = 0;
+	simulation->sync_mutex_ready = 0;
+	simulation->sync_cond_ready = 0;
+	simulation->dongles_ready = 0;
+	simulation->scheduler_ready = 0;
+	simulation->coders_started = 0;
+	simulation->monitor_started = 0;
+	simulation->scheduler.pending = NULL;
+	simulation->scheduler.heap.items = NULL;
+	simulation->scheduler.heap.size = 0;
+	simulation->scheduler.heap.capacity = 0;
+	simulation->scheduler.next_seq = 0;
+}
+
 static t_simulation	*alloc_simulation(t_config *config)
 {
 	t_simulation	*simulation;
@@ -23,17 +45,7 @@ static t_simulation	*alloc_simulation(t_config *config)
 	simulation = malloc(sizeof(t_simulation));
 	if (!simulation)
 		return (NULL);
-	simulation->configuration = config;
-	simulation->dongles = NULL;
-	simulation->coders = NULL;
-	simulation->start_time = 0;
-	simulation->stop_flag = 0;
-	simulation->stop_reason = 0;
-	simulation->scheduler.pending = NULL;
-	simulation->scheduler.heap.items = NULL;
-	simulation->scheduler.heap.size = 0;
-	simulation->scheduler.heap.capacity = 0;
-	simulation->scheduler.next_seq = 0;
+	clear_simulation(simulation, config);
 	return (simulation);
 }
 
@@ -41,17 +53,23 @@ static int	init_sync(t_simulation *simulation)
 {
 	if (pthread_mutex_init(&simulation->logging, NULL) != 0)
 		return (0);
+	simulation->logging_ready = 1;
 	if (pthread_mutex_init(&simulation->sync.mutex, NULL) != 0)
 	{
 		pthread_mutex_destroy(&simulation->logging);
+		simulation->logging_ready = 0;
 		return (0);
 	}
+	simulation->sync_mutex_ready = 1;
 	if (pthread_cond_init(&simulation->sync.condition, NULL) != 0)
 	{
 		pthread_mutex_destroy(&simulation->sync.mutex);
 		pthread_mutex_destroy(&simulation->logging);
+		simulation->sync_mutex_ready = 0;
+		simulation->logging_ready = 0;
 		return (0);
 	}
+	simulation->sync_cond_ready = 1;
 	return (1);
 }
 
@@ -60,8 +78,11 @@ static int	init_scheduler(t_simulation *simulation)
 	int	n;
 
 	n = simulation->configuration->number_of_coders;
-	return (scheduler_init(&simulation->scheduler, n,
-			simulation->configuration->scheduler));
+	if (!scheduler_init(&simulation->scheduler, n,
+			simulation->configuration->scheduler))
+		return (0);
+	simulation->scheduler_ready = 1;
+	return (1);
 }
 
 t_simulation	*simulation_init(t_config *config)
